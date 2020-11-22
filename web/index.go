@@ -3,11 +3,14 @@ package boltbrowserweb
 import (
 	"bytes"
 	"fmt"
+	"os"
+	"time"
+
 	"github.com/boltdb/bolt"
 	"github.com/gin-gonic/gin"
 )
 
-var Db *bolt.DB
+var DbName string
 
 func Index(c *gin.Context) {
 
@@ -16,12 +19,17 @@ func Index(c *gin.Context) {
 }
 
 func CreateBucket(c *gin.Context) {
-
+	db, err := bolt.Open(DbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer db.Close()
 	if c.PostForm("bucket") == "" {
 		c.String(200, "no bucket name | n")
 	}
 
-	Db.Update(func(tx *bolt.Tx) error {
+	db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(c.PostForm("bucket")))
 		b = b
 		if err != nil {
@@ -34,12 +42,17 @@ func CreateBucket(c *gin.Context) {
 }
 
 func DeleteBucket(c *gin.Context) {
-
+	db, err := bolt.Open(DbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer db.Close()
 	if c.PostForm("bucket") == "" {
 		c.String(200, "no bucket name | n")
 	}
 
-	Db.Update(func(tx *bolt.Tx) error {
+	db.Update(func(tx *bolt.Tx) error {
 		err := tx.DeleteBucket([]byte(c.PostForm("bucket")))
 
 		if err != nil {
@@ -60,8 +73,13 @@ func DeleteKey(c *gin.Context) {
 	if c.PostForm("bucket") == "" || c.PostForm("key") == "" {
 		c.String(200, "no bucket name or key | n")
 	}
-
-	Db.Update(func(tx *bolt.Tx) error {
+	db, err := bolt.Open(DbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer db.Close()
+	db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(c.PostForm("bucket")))
 		b = b
 		if err != nil {
@@ -90,8 +108,13 @@ func Put(c *gin.Context) {
 	if c.PostForm("bucket") == "" || c.PostForm("key") == "" {
 		c.String(200, "no bucket name or key | n")
 	}
-
-	Db.Update(func(tx *bolt.Tx) error {
+	db, err := bolt.Open(DbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer db.Close()
+	db.Update(func(tx *bolt.Tx) error {
 		b, err := tx.CreateBucketIfNotExists([]byte(c.PostForm("bucket")))
 		b = b
 		if err != nil {
@@ -124,8 +147,13 @@ func Get(c *gin.Context) {
 		res[1] = "no bucket name or key | n"
 		c.JSON(200, res)
 	}
-
-	Db.View(func(tx *bolt.Tx) error {
+	db, err := bolt.Open(DbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer db.Close()
+	db.View(func(tx *bolt.Tx) error {
 
 		b := tx.Bucket([]byte(c.PostForm("bucket")))
 
@@ -169,10 +197,15 @@ func PrefixScan(c *gin.Context) {
 	}
 
 	count := 0
-
+	db, err := bolt.Open(DbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer db.Close()
 	if c.PostForm("key") == "" {
 
-		Db.View(func(tx *bolt.Tx) error {
+		db.View(func(tx *bolt.Tx) error {
 			// Assume bucket exists and has keys
 			b := tx.Bucket([]byte(c.PostForm("bucket")))
 
@@ -202,7 +235,7 @@ func PrefixScan(c *gin.Context) {
 
 	} else {
 
-		Db.View(func(tx *bolt.Tx) error {
+		db.View(func(tx *bolt.Tx) error {
 			// Assume bucket exists and has keys
 			b := tx.Bucket([]byte(c.PostForm("bucket"))).Cursor()
 
@@ -236,10 +269,14 @@ func PrefixScan(c *gin.Context) {
 }
 
 func Buckets(c *gin.Context) {
-
 	res := []string{}
-
-	Db.View(func(tx *bolt.Tx) error {
+	db, err := bolt.Open(DbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(1)
+	}
+	defer db.Close()
+	db.View(func(tx *bolt.Tx) error {
 
 		return tx.ForEach(func(name []byte, _ *bolt.Bucket) error {
 

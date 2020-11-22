@@ -13,13 +13,12 @@ import (
 	"fmt"
 	"os"
 	"path"
-	"time"
 
-	"github.com/evnix/boltdbweb/web"
 	"github.com/gin-gonic/gin"
+	boltbrowserweb "github.com/monkeydioude/boltdbweb/web"
 
-	log "github.com/sirupsen/logrus"
 	"github.com/boltdb/bolt"
+	log "github.com/sirupsen/logrus"
 )
 
 const version = "v0.0.0"
@@ -84,14 +83,13 @@ func main() {
 	fmt.Print(" ")
 	log.Info("starting boltdb-browser..")
 
-	var err error
-	db, err = bolt.Open(dbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
-	boltbrowserweb.Db = db
+	// db, err = bolt.Open(dbName, 0600, &bolt.Options{Timeout: 2 * time.Second})
 
-	if err != nil {
-		fmt.Println(err)
-		os.Exit(1)
-	}
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	os.Exit(1)
+	// }
+	boltbrowserweb.DbName = dbName
 
 	// OK, we should be ready to define/run web server safely.
 	r := gin.Default()
